@@ -42,7 +42,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const postsResponse = await prismic.query(
     Prismic.predicate.at('document.type', 'posts'),
     {
-      pageSize: 20,
+      pageSize: 1,
       fetch: ['posts.title', 'posts.subtitle', 'posts.author'],
     }
   );
@@ -92,7 +92,7 @@ export default function Home({ postsPagination }: HomeProps) {
           },
         }));
         setPostData({
-          next_page: result.next_page,
+          next_page: postData.next_page,
           results: [...postData.results, ...postsFormateds],
         });
       });
@@ -133,8 +133,8 @@ export default function Home({ postsPagination }: HomeProps) {
           {postData.next_page && (
             <button
               className={styles.nextButton}
-              type="button"
               onClick={handleNextPage}
+              type="button"
             >
               Carregar mais posts
             </button>

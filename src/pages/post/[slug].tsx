@@ -6,12 +6,14 @@ import { AiOutlineCalendar, AiOutlineClockCircle } from 'react-icons/ai';
 import { BiUser } from 'react-icons/bi';
 import { RichText } from 'prismic-dom';
 import { Fragment } from 'react';
+import { useRouter } from 'next/router';
 import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 
 interface Post {
+  uid: string;
   first_publication_date: string | null;
   data: {
     title: string;
@@ -30,7 +32,11 @@ interface PostProps {
   post: Post;
 }
 
-export default function Post({ post }: PostProps) {
+export default function Post({ post, ...rest }: PostProps) {
+  const router = useRouter();
+
+  if (router.isFallback) return <p>Carregando...</p>;
+
   const timeEstimated = post.data.content.reduce(
     (contentSum, content) => {
       const wordsHeading = content.heading
@@ -99,7 +105,18 @@ export default function Post({ post }: PostProps) {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   return {
-    paths: [],
+    paths: [
+      {
+        params: {
+          slug: 'como-utilizar-hooks',
+        },
+      },
+      {
+        params: {
+          slug: 'criando-um-app-cra-do-zero',
+        },
+      },
+    ],
     fallback: 'blocking',
   };
 };
@@ -112,12 +129,17 @@ export const getStaticProps: GetStaticProps = async context => {
   return {
     props: {
       post: {
+        uid: response.uid,
         first_publication_date: response.first_publication_date,
         data: {
           title:
             typeof response.data.title === 'string'
               ? response.data.title
               : RichText.asText(response.data.title),
+          subtitle:
+            typeof response.data.subtitle === 'string'
+              ? response.data.subtitle
+              : RichText.asText(response.data.subtitle),
           banner: {
             url: response.data.banner.url,
           },
