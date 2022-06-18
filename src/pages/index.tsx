@@ -6,6 +6,7 @@ import { AiOutlineCalendar } from 'react-icons/ai';
 import { BiUser } from 'react-icons/bi';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { useState } from 'react';
 import { getPrismicClient } from '../services/prismic';
 
 import commonStyles from '../styles/common.module.scss';
@@ -20,6 +21,11 @@ interface Post {
     subtitle: string;
     author: string;
   };
+}
+
+interface PrismicResponse {
+  next_page: string | null;
+  results: Post[];
 }
 
 interface PostPagination {
@@ -70,7 +76,27 @@ export const getStaticProps: GetStaticProps = async () => {
 };
 
 export default function Home({ postsPagination }: HomeProps) {
-  console.log(JSON.stringify(postsPagination.results, null, 2));
+  const [postData, setPostData] = useState(postsPagination);
+
+  function handleNextPage() {
+    fetch(postData.next_page)
+      .then(result => result.json())
+      .then((result: PrismicResponse) => {
+        const postsFormateds: Post[] = result.results.map(post => ({
+          uid: post.uid,
+          first_publication_date: post.first_publication_date,
+          data: {
+            author: post.data.author,
+            subtitle: RichText.asText(post.data.subtitle),
+            title: RichText.asText(post.data.title),
+          },
+        }));
+        setPostData({
+          next_page: result.next_page,
+          results: [...postData.results, ...postsFormateds],
+        });
+      });
+  }
 
   return (
     <>
@@ -79,7 +105,7 @@ export default function Home({ postsPagination }: HomeProps) {
       </Head>
       <main className={styles.container}>
         <div className={styles.posts}>
-          {postsPagination.results.map(post => (
+          {postData.results.map(post => (
             <Link href={`/post/${post.uid}`} key={post.uid}>
               <a>
                 <strong>{post.data.title}</strong>
@@ -104,8 +130,14 @@ export default function Home({ postsPagination }: HomeProps) {
               </a>
             </Link>
           ))}
-          {postsPagination.next_page && (
-            <span className={styles.nextButton}>Carregar mais posts</span>
+          {postData.next_page && (
+            <button
+              className={styles.nextButton}
+              type="button"
+              onClick={handleNextPage}
+            >
+              Carregar mais posts
+            </button>
           )}
         </div>
       </main>
