@@ -51,7 +51,7 @@ export const getStaticProps: GetStaticProps = async () => {
           : RichText.asText(post.data.title),
       subtitle:
         typeof post.data.subtitle === 'string'
-          ? post.data.title
+          ? post.data.subtitle
           : RichText.asText(post.data.subtitle),
       author: post.data.author,
     },
