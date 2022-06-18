@@ -5,11 +5,12 @@ import { RichText } from 'prismic-dom';
 import { AiOutlineCalendar } from 'react-icons/ai';
 import { BiUser } from 'react-icons/bi';
 import Link from 'next/link';
+import { format } from 'date-fns';
 import { getPrismicClient } from '../services/prismic';
 
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
-import { formatToLocaleDate } from '../utils/formatToLocaleDate';
+// import { formatToLocaleDate } from '../utils/formatToLocaleDate';
 
 interface Post {
   uid: string;
@@ -35,7 +36,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const postsResponse = await prismic.query(
     Prismic.predicate.at('document.type', 'posts'),
     {
-      pageSize: 100,
+      pageSize: 1,
       fetch: ['posts.title', 'posts.subtitle', 'posts.author'],
     }
   );
@@ -44,8 +45,14 @@ export const getStaticProps: GetStaticProps = async () => {
     uid: post.uid,
     first_publication_date: post.first_publication_date,
     data: {
-      title: RichText.asText(post.data.title),
-      subtitle: RichText.asText(post.data.subtitle),
+      title:
+        typeof post.data.title === 'string'
+          ? post.data.title
+          : RichText.asText(post.data.title),
+      subtitle:
+        typeof post.data.subtitle === 'string'
+          ? post.data.title
+          : RichText.asText(post.data.subtitle),
       author: post.data.author,
     },
   }));
@@ -63,6 +70,8 @@ export const getStaticProps: GetStaticProps = async () => {
 };
 
 export default function Home({ postsPagination }: HomeProps) {
+  console.log(JSON.stringify(postsPagination.results, null, 2));
+
   return (
     <>
       <Head>
@@ -78,7 +87,14 @@ export default function Home({ postsPagination }: HomeProps) {
                 <div className={styles.info}>
                   <div>
                     <AiOutlineCalendar color="#BBBBBB" size={23} />
-                    <time>{post.first_publication_date}</time>
+                    <time>
+                      {format(
+                        new Date(post.first_publication_date),
+                        'dd MMM yyyy'
+                      )
+                        .toString()
+                        .toLowerCase()}
+                    </time>
                   </div>
                   <div>
                     <BiUser color="#BBBBBB" size={23} />
