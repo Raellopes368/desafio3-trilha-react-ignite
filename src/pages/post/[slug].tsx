@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { AiOutlineCalendar, AiOutlineClockCircle } from 'react-icons/ai';
 import { BiUser } from 'react-icons/bi';
 import { RichText } from 'prismic-dom';
+import { Fragment } from 'react';
 import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
@@ -30,6 +31,22 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps) {
+  const timeEstimated = post.data.content.reduce(
+    (contentSum, content) => {
+      const wordsHeading = content.heading
+        .split(' ')
+        .filter(word => word.match(/\w{1,}/i)).length;
+      const wordsBody = RichText.asText(content.body)
+        .split(' ')
+        .filter(word => word.match(/\w{1,}/i)).length;
+      const totalWords = wordsHeading + wordsBody;
+      return { ...contentSum, totalWords: contentSum.totalWords + totalWords };
+    },
+    {
+      totalWords: 0,
+    }
+  );
+
   return (
     <>
       <Head>
@@ -60,17 +77,19 @@ export default function Post({ post }: PostProps) {
 
             <div>
               <AiOutlineClockCircle color="#BBBBBB" size={23} />
-              <span>{post.data.author}</span>
+              <span>{Math.ceil(timeEstimated.totalWords / 200)} min</span>
             </div>
           </div>
           {post.data.content.map(content => (
-            <>
+            <Fragment key={content.heading}>
               <h2>{content.heading}</h2>
               <div
                 className={styles.postContent}
-                dangerouslySetInnerHTML={{ __html: content.body }}
+                dangerouslySetInnerHTML={{
+                  __html: RichText.asHtml(content.body),
+                }}
               />
-            </>
+            </Fragment>
           ))}
         </article>
       </main>
@@ -108,11 +127,11 @@ export const getStaticProps: GetStaticProps = async context => {
               typeof content.heading === 'string'
                 ? content.heading
                 : RichText.asText(content.heading),
-            body: RichText.asHtml(content.body),
+            body: content.body,
           })),
         },
       },
-      revalidate: 60 * 30, // 30 minutes
     },
+    revalidate: 60 * 30, // 30
   };
 };
