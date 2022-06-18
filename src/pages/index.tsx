@@ -42,7 +42,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const postsResponse = await prismic.query(
     Prismic.predicate.at('document.type', 'posts'),
     {
-      pageSize: 1,
+      pageSize: 20,
       fetch: ['posts.title', 'posts.subtitle', 'posts.author'],
     }
   );
@@ -124,7 +124,7 @@ export default function Home({ postsPagination }: HomeProps) {
                   </div>
                   <div>
                     <BiUser color="#BBBBBB" size={23} />
-                    <time>{post.data.author}</time>
+                    <span>{post.data.author}</span>
                   </div>
                 </div>
               </a>
